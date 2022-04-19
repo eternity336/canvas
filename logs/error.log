@@ -1,0 +1,13 @@
+[2022-04-18 22:57:26 -0400] [21028] [INFO] Starting gunicorn 20.1.0
+[2022-04-18 22:57:26 -0400] [21028] [INFO] Listening at: http://127.0.0.1:8000 (21028)
+[2022-04-18 22:57:26 -0400] [21028] [INFO] Using worker: gthread
+[2022-04-18 22:57:26 -0400] [21053] [INFO] Booting worker with pid: 21053
+[2022-04-18 22:57:26 -0400] [21054] [INFO] Booting worker with pid: 21054
+[2022-04-18 22:57:26 -0400] [21055] [INFO] Booting worker with pid: 21055
+[2022-04-18 22:57:26 -0400] [21057] [INFO] Booting worker with pid: 21057
+[2022-04-18 22:57:26 -0400] [21062] [INFO] Booting worker with pid: 21062
+[2022-04-18 22:57:26 -0400] [21063] [INFO] Booting worker with pid: 21063
+[2022-04-18 22:57:26 -0400] [21065] [INFO] Booting worker with pid: 21065
+[2022-04-18 22:57:26 -0400] [21068] [INFO] Booting worker with pid: 21068
+[2022-04-18 22:57:26 -0400] [21069] [INFO] Booting worker with pid: 21069
+[2022-04-18 22:57:26 -0400] [21070] [INFO] Booting worker with pid: 21070

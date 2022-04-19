@@ -1,0 +1,357 @@
+<html>
+<meta http-equiv='cache-control' content='no-cache'></meta>
+<meta http-equiv='expires' content='0'></meta>
+<meta http-equiv='pragma' content='no-cache'></meta>
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<style>
+	body{
+		background-color: darkgrey;
+	}
+	
+	input, label{
+		color: black;
+	}
+	
+	#canvas {
+		border: 1px solid black;
+		float: left;
+		width: 100%;
+		height: auto;
+	}
+
+	#previewZoom{
+		position:absolute;
+		pointer-events:none;
+		border:1px solid black;
+		border-radius: 5%;
+		width:100px;
+		height:100px;
+		background-repeat: no-repeat;
+	}
+	
+	#previewDrop {
+		position:absolute;
+		pointer-events:none;
+		background-repeat: no-repeat;
+	}
+	
+	#canvas:hover {
+		cursor: crosshair;
+	}
+</style>
+
+<div id="previewZoom" style="display: none;">
+	<label style='padding: 2%; background-color:grey; color:white; position:absolute; top:30%; left:55%;' id='preview_xy'>
+	</label>
+</div>
+
+<div id="previewDrop" style="display: none;">
+</div>
+		
+<div id='canvasdiv'>
+	<img class="canvas" id="canvas" src="static/img/canvas.png" onload="setRealDimensions(event);" onresize="setRealDimensions(event);" onmousemove="zoomIn(event)" onmouseleave="zoomOut()" onclick="sendForm(event,'click')">
+	</img>
+</div>
+
+<script>
+	var sec = 0;
+	var a = '1';
+	var b = '2';
+	var t = '';
+	img = new Image();
+	var canvas = document.getElementById("canvas");
+	img.src = canvas.src;		
+	var realWidth = 1800;
+	var realHeight = 600;
+	var preSize = 200;
+	var preview = true;
+	var interval_timer = "";
+	var hash = "{{hash}}";
+	var magnify = 6;
+	
+	function setRealDimensions(e){
+		img = new Image();
+		canvas = document.getElementById("canvas");
+		img.src = canvas.src;		
+		realWidth = img.width;
+		realHeight = img.height;
+	} 
+	
+	function dropIn(e) {
+		if (previewCheck.checked == true){
+			console.log('dropin')
+			var chooseFile = document.getElementById("img");
+			var pre = document.getElementById("previewDrop");
+			var x = document.getElementById('x').value;
+			var y = document.getElementById('y').value;
+			var color = document.getElementById('color').value;
+			var canvas_rect = canvas.getBoundingClientRect();
+			var masterOffset = (canvas.offsetWidth - canvas.offsetLeft)/realWidth;
+			pre.style.display = 'block';
+			pre.style.visibility = "visible";
+			const files = chooseFile.files[0];
+			if (files) {
+				const fileReader = new FileReader();
+				fileReader.readAsDataURL(files);
+					fileReader.addEventListener("load", function () {
+						pre.style.backgroundColor = "transparent";
+						pre.style.width = 100*masterOffset + 'px';
+						pre.style.height = 100*masterOffset + 'px';
+						pre.innerHTML = '<img id="previewImage" src="' + this.result + '" />';
+						var pi = document.getElementById('previewImage')
+						var h = pi.height;
+						var w = pi.width;
+						if (h > w){
+							pi.style.height = 100*masterOffset + 'px';
+							pi.style.width = 'auto';
+						}else{
+							pi.style.width = 100*masterOffset + 'px';
+							pi.style.height = 'auto';
+						}
+					});    
+			}else{
+				pre.style.backgroundColor = color;
+				pre.style.width = 1*masterOffset + 'px';
+				pre.style.height = 1*masterOffset + 'px';
+				pre.innerHTML = "";
+			};
+			pre.style.top = canvas_rect.y + (y*masterOffset) + 'px';
+			pre.style.left = canvas_rect.x + (x*masterOffset) + 'px';
+		}else{
+			dropOut(e);
+		}
+		
+	}
+	
+	function dropOut(e) {
+		var pre = document.getElementById("previewDrop");
+		pre.innerHTML = "";
+		pre.style.width = 0;
+		pre.style.height = 0;
+		pre.style.display = 'none';
+		pre.style.visibility = "hidden";
+	}
+	
+	function zoomIn(e) {
+		var pre = document.getElementById("previewZoom");
+		var pre_xy = document.getElementById("preview_xy");
+		var canvas = document.getElementById("canvas");
+		pre.style.backgroundImage = "url('"+canvas.src+"')";
+		var x = document.getElementById('x');
+		var y = document.getElementById('y');
+		pre.style.backgroundSize = (canvas.offsetWidth * magnify) + 'px ' + (canvas.offsetHeight * magnify) + 'px';
+		var masterOffset = (canvas.offsetWidth - canvas.offsetLeft)/realWidth;
+		var masterBgOffset = (canvas.offsetWidth * magnify)/realWidth;
+		var x_value = parseInt((e.pageX - canvas.offsetLeft)/masterOffset);
+		if (x_value < 0){
+			x_value = 0;
+		};
+		if (x_value > realWidth){
+			x_value = realWidth;
+		};
+		var y_value = parseInt((e.pageY-canvas.offsetTop)/masterOffset);
+		if (y_value < 0){
+			y_value = 0;
+		};
+		if (y_value > realHeight){
+			y_value = realHeight;
+		};
+			
+		pre.style.display = 'block';
+		pre.style.visibility = "visible";
+		pre.style.width = preSize*masterOffset;
+		pre.style.height = preSize*masterOffset;
+		pre.style.top = e.pageY-((preSize*masterOffset)/2);
+		pre.style.left = e.pageX -((preSize*masterOffset)/2);
+		var x_bg_value = (x_value) * masterBgOffset;
+		var y_bg_value = (y_value) * masterBgOffset;
+		//x.value = x_value;
+		//y.value = y_value;
+		pre_xy.innerHTML = '['+x_value + ',' + y_value+']';
+		pre.style.backgroundPosition=-(x_bg_value - ((preSize*masterOffset)/2)) + "px " + -(y_bg_value - ((preSize*masterOffset)/2)) + "px";
+	}
+
+	function zoomOut() {
+		var pre = document.getElementById("previewZoom");
+		pre.style.display = 'none';
+		pre.style.visibility = "hidden";
+	}
+	
+	function refreshCanvas(){
+		var img = document.getElementById('canvas');
+		$.ajax({
+					url: "/imghash",
+					type: 'GET'
+				}).done(function(data){
+					if (data.includes('|')){
+						results = data.split('|')
+						if (hash != results[0] && results[0] != 'none'){
+							img.src = 'static/img/canvas.png?h='+data;
+						}
+						visitors = document.getElementById('visitors')
+						visitors.innerHTML = 'Visitors: ' + results[1];
+					}
+					
+				});
+		
+	}
+	
+	if (interval_timer == ""){
+		inverval_timer = setInterval(function() { 
+			refreshCanvas();
+		}, 1000);
+	}		
+	
+	function setTimer(){
+		console.log('SetTimer');
+		if (sec == 0){
+			sec = 60;
+			var timer = setInterval(function() {
+				if(sec == 0){
+					sec_str = sec.toString();
+					sec_str = '0' + sec_str;
+					document.getElementById('timer').innerHTML = 'Timer: 00:' + sec_str;
+					clearInterval(timer);
+					return
+				};
+				console.log('In Timer');
+				sec_str = sec.toString();
+				if (sec_str.length == 1){
+					sec_str = '0' + sec_str;
+				};
+				
+				document.getElementById('timer').innerHTML = 'Timer: 00:' + sec_str;
+				sec--;
+				
+			}, 1000); 
+		};
+	}
+	
+	function getCoordinates(e){
+		var canvas = document.getElementById("canvas");
+		var masterOffset = (canvas.offsetWidth - canvas.offsetLeft)/realWidth;
+		
+		//Get true location for X
+		var x = parseInt((e.pageX - canvas.offsetLeft)/masterOffset);
+		if (x < 0){
+			x = 0;
+		};
+		if (x > realWidth){
+			x = realWidth;
+		};
+		
+		//Get true location for Y
+		var y = parseInt((e.pageY-canvas.offsetTop)/masterOffset);
+		if (y < 0){
+			y = 0;
+		};
+		if (y > realHeight){
+			y = realHeight;
+		};
+		return {x,y}
+	}
+	
+	function sendForm(e,action){
+		var x = document.getElementById('x').value;
+		var y = document.getElementById('y').value;
+		if (action == 'click'){
+			loc = getCoordinates(e);
+			x = loc.x;
+			y = loc.y;
+		}
+		var answer = confirm("Do you want to place your pixel/image at " + x + "," + y + "?");
+		if (answer == true){
+			console.log('sendForm')
+			if (sec == 0){
+				setTimer();
+				var myFormData = new FormData();
+				myFormData.append('x', x);
+				myFormData.append('y', y);
+				myFormData.append('color', document.getElementById('color').value);
+				myFormData.append('img', document.getElementById('img').files[0]);
+				$.ajax({
+					url: '/',
+					type: 'POST',
+					processData: false, // important
+					contentType: false, // important
+					data: myFormData
+				}).done(function(data){
+					console.log(data);
+					if (data == "Success!"){
+						refreshCanvas();
+						alert(data);
+					}else{
+						alert("Sorry was not able to submit request! :(");
+					}
+				}).fail(function(data){
+					alert("Sorry was not able to submit request! :(");
+				});
+			}else{
+				alert("Still have " + sec + "seconds remaining!");
+			}
+		}
+	}
+	
+	function checkExtention(){
+		var img = document.getElementById('img');
+		var filename = img.value;
+		var allowedExtensions = /(\.bmp|\.jpg|\.jpeg|\.png|\.gif)$/i;
+		if(!allowedExtensions.exec(filename)){
+			alert('Please upload file having extensions .bmp/.jpeg/.jpg/.png/.gif only.');
+			img.value = '';
+			return false;
+		}	
+		return true;
+	}
+</script>
+
+<div>
+	<div style='display:inline-block; width:100%;'>
+		<div style='display:inline-block;'>
+			<input style='display:block;' name='x' id='x' type='number' onchange="dropIn(event)" min=0 max=4000 placeholder="X" value='{{x}}'></input>
+			<label style='display:block;' for='x'>[X - Location]</label>
+		</div>
+		<div style='display:inline-block;'>
+			<input style='display:block;' name='y' id='y' type='number' onchange="dropIn(event)" min=0 max=4000 placeholder="Y" value='{{y}}'></input>
+			<label style='display:block;' for='y'>[Y - Location]</label>
+		</div>
+		<div style='display:inline-block;'>
+			<input style='display:block;' id='previewCheck' onchange="dropIn(event)"  type='checkbox'></input>
+			<label style='display:block;' for='previewCheck'>[Preview]</label>
+		</div>
+		<div style='display:inline-block;'>
+			<input style='display:block;' type="file" id="img" name="img" onchange="if (checkExtention()){dropIn(event)};" accept=".jpg,.jpeg,.bmp,.png,.gif">
+			<label style='display:block;' for="img">[Images will be shrunk to being no bigger then 100x100 pixels!]</label>
+		</div>
+		<div style='display:inline-block; padding-top:4px;'>
+			<input style='display:block;' id='color' name='color' onchange="dropIn(event)" type='color' value='{{color}}'></input>
+			<label style='display:block;' for='color'>[Pixel Color]</label>
+		</div>
+		<div style='display:inline-block;'>
+			<button id="pixelSubmit" style='display:block;' onclick='sendForm(event,"submit");'>Submit</button>
+			<a href="https://paypal.me/Eternity336?country.x=US&locale.x=en_US" target="_blank">
+				<input type="button" value="DONATE"></input>
+			</a>
+		</div>
+		<div style="float:right; padding-top:8px;">
+			<label for='zoom_amount'>ZOOM</label>
+			<select id='zoom_amount' style="padding: 2px;" onchange="magnify=this.value;">
+				<option>1</option>
+				<option>2</option>
+				<option>4</option>
+				<option selected>6</option>
+				<option>8</option>
+				<option>10</option>
+			</select>
+			<label id='timer' style='background-color: lightgrey; border-style: double; top:4px; padding: 2px; font-family: "Brush Script MT", cursive;'>Timer: 00:00</label>
+			<label id='visitors' style='background-color: lightgrey; border-style: double; top:4px; padding: 2px; font-family: "Brush Script MT", cursive;'>Visitors: {{visitors}}</label>
+		</div>
+	</div>
+	<label style='display:block;'>- Join in the fun it's free!</label>
+	<label style='display:block;'>- You can only update the canvas once every minute!</label>
+	<label style='display:block;'>- You can click on image to place image or pixel in that location!</label>
+	<label style='display:block;'>- Use the X and Y box if you want to be more precise.</label>
+	<label style='display:block;'>- Donations are appreciated so I can move this to something bigger or add requests!</label>
+	<label style='display:block;'>Join me at <a href='https://www.reddit.com/r/canvas_eternity336/'>Eternity336 Canvas Reddit</a> to have discussions/collaborate on the future of canvas!</label>
+</div>
+</html>
